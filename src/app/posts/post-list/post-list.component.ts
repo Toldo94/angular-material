@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Subscription } from 'rxjs';
+import { AuthService } from 'src/app/auth/auth.service';
 import { PostServiceService } from '../post-service.service';
 
 import { Post } from '../post.model';
@@ -13,6 +14,7 @@ import { Post } from '../post.model';
 export class PostListComponent implements OnInit, OnDestroy {
   posts: Post[] = [];
   private postsSub: Subscription;
+  private authStatusSub: Subscription;
   isLoading = false;
   totalPosts = 0;
   postsPerPage = 2;
@@ -20,8 +22,11 @@ export class PostListComponent implements OnInit, OnDestroy {
   pageSizeOptions: number[] = [
     1, 2, 5, 10
   ];
+  userIsAuthenticated = false;
 
-  constructor(private postService: PostServiceService) {
+  constructor(
+    private postService: PostServiceService,
+    private authService: AuthService) {
   }
 
   ngOnInit(): void {
@@ -33,6 +38,10 @@ export class PostListComponent implements OnInit, OnDestroy {
         this.posts = postData.posts;
         this.totalPosts = postData.postCount;
       });
+    this.userIsAuthenticated = this.authService.getIsAuth();
+    this.authStatusSub = this.authService.getAuthStatusListener().subscribe(isAuthenticated => {
+      this.userIsAuthenticated = isAuthenticated;
+    });
   }
 
   onDelete(id: string) {
@@ -44,6 +53,7 @@ export class PostListComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.postsSub.unsubscribe();
+    this.authStatusSub.unsubscribe();
   }
 
   onChangePage(page: PageEvent) {
